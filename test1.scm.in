@@ -40,23 +40,13 @@
 (export-type (make-list-type 'number))
 (export-type (make-list-type (make-list-type 'number)))
 
-;; (define-input-var bool1 true 'boolean)
+(define-input-var bool1 true 'boolean)
 
-;; (define-class bool2-type no-parent
-;;   (define-property bool1 false 'boolean)
-;;   (define-property bool2 true 'boolean)
-;;   )
-;; (define bool2-type-default
-;;   (make bool2-type))
-;; (define-input-var bool2 bool2-type-default 'bool2-type)
-										
 (define-class bool3-type no-parent
-  (define-property int1 1 'integer)
-  (define-property num1 1.0 'number)
   (define-property bool1 false 'boolean)
+  (define-property bool2 false 'boolean)
   )
-(define bool3-type-default
-  (make bool3-type))
+(define bool3-type-default  (make bool3-type))
 (define-input-var bool3 bool3-type-default 'bool3-type)
 
 ; ****************************************************************

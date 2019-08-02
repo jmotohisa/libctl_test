@@ -1,46 +1,90 @@
-Example program using libctl.  This consists of:
+Strainge behavior
+---
 
-main.c: skeleton main program.  To create a real program using libctl,
-	you will only need to make slight changes to this file.
+(1) 'bool1' is not defined at startup
 
-example.scm: a sample specification file that contains
-	a few parameters similar to what you might give to a
-	photonic crystal program.  This uses the geometry
-	classes and utilities in utils/libgeom.
+$ ./test1                                                                           (git)-[master]
+GNU Guile 2.2.4
+Copyright (C) 1995-2017 Free Software Foundation, Inc.
 
-example.c: example of a main subroutine (called by main.c) which
-	demonstrates how the input/output variables are automatically
-	read/written.
+Guile comes with ABSOLUTELY NO WARRANTY; for details type `,show w'.
+This program is free software, and you are welcome to redistribute it
+under certain conditions; type `,show c' for details.
 
-run.ctl: example control file that creates some data for the program
-	to read.
+Enter `,help' for help.
+test1> bool1
+$1 = #<procedure 10a0b5540 at ice-9/eval.scm:333:13 (a)>
 
-Makefile: makefile for the example program.  (Also a good starting point
-	for the Makefile of a real program using libctl.)
+or if test1 is not initialized
 
-So, to compile and run everything, you simply type:
+$ ./test1 run.ctl                                                                   (git)-[master] Backtrace:
+           5 (apply-smob/1 #<catch-closure 10b544080>)
+In ice-9/eval.scm:
+    619:8  4 (_ #(#(#<directory (guile-user) 10b530140>) "run.ctl"))
+    619:8  3 (_ #(#(#(#<directory (guile-user) 10b530140>) "run?") ?))
+In unknown file:
+           2 (primitive-load "run.ctl")
+In ice-9/eval.scm:
+    619:8  1 (_ #(#(#<directory (guile-user) 10b530140>) ()))
+In unknown file:
+           0 (read-input-vars)
 
-make
-example run.ctl
+ERROR: In procedure read-input-vars:
+Wrong type: #<procedure 10c045d80 at ice-9/eval.scm:333:13 (a)>
 
-Since run.ctl does not call (run), this drops you into Guile's
-interactive mode, where you can start typing in Scheme commands.  For
-example, you can try:
 
-(help)  ; prints help on data structures and variables defined by
-	; the specification file
+-------
+(2) Class including boolean invokes error at definision in the non-intractive mode
+(error is not invoked in the intractive mode.)
 
-k-points   ; prints the value of the k-points variable (set by run.ctl)
+$ cat test1_test1.ctl                                                               (git)-[master]
+(define bool3-test2
+  (make bool3-type
+        (bool1 false)
+        (int1 2)
+        (num1 10.0)))
 
-(run)   ; runs the example program (exports the input variables,
-	; calls run_program in main.c, and imports the output variables).
+$ ./test1
+GNU Guile 2.2.4
+Copyright (C) 1995-2017 Free Software Foundation, Inc.
 
-Type Ctrl-D or (quit) to exit.
+Guile comes with ABSOLUTELY NO WARRANTY; for details type `,show w'.
+This program is free software, and you are welcome to redistribute it
+under certain conditions; type `,show c' for details.
 
-Another pair of interesting files to look at, after you have run make,
-are ctl-io.c and ctl-io.h.  These files are automatically generated
-from the specifications file.  They define the data structures
-corresponding to the input/output variables, and handle importing and
-exporting variable values between C and Scheme.
+Enter `,help' for help.
+test1> (define bool3-test1 (make bool3-type (bool1 true)))  
+test1> bool3-test1
+$1 = ((bool3-type) (int1 . 1) (num1 . 1.0) (bool1 . #t))
+test1> (include "test1_test1.ctl")  ;; include some file
+#<procedure 105397ba0 at ice-9/eval.scm:333:13 (a)>
+#t
+ERROR: Wrong type to apply: #t
 
-Have fun!
+Entering a new prompt.  Type `,bt' for a backtrace or `,q' to continue.
+test1> bool3-test1
+$2 = ((bool3-type) (int1 . 1) (num1 . 1.0) (bool1 . #t))
+test1> (define bool3-test1 (make bool3-type (bool1 true)))
+ERROR: Wrong type to apply: #t
+
+Entering a new prompt.  Type `,bt' for a backtrace or `,q' to continue.
+test1> bool3-test1
+$3 = ((bool3-type) (int1 . 1) (num1 . 1.0) (bool1 . #t))
+test1> bool3-test2
+;;; <unknown-location>: warning: possibly unbound variable `bool3-test2'
+ERROR: In procedure module-lookup: Unbound variable: bool3-test2
+
+Entering a new prompt.  Type `,bt' for a backtrace or `,q' to continue.
+test1> bool3
+$4 = ((bool3-type) (int1 . 1) (num1 . 1.0) (bool1 . #f))
+-----
+Conclusion:
+"bool1" should be defined as procedure to validate definition of bool3-type,
+but it is read when running the progam but is not defined, so error is invoked
+
+bool1 はbool3-typeを定義するためにprocedureでなければならない。
+しかし、入力変数としても定義されているので、プログラムを走らるとbool1
+を読みこもうとしてしまう。このため未定義になのでエラーが発生する。
+逆に、bool1をsetしておくとプログラムを走らせる時には読み込みエラーは発
+生しなくなるが、bool3を定義するために (bool1 hoge)とするとwrong type
+to apply となってしまう。
